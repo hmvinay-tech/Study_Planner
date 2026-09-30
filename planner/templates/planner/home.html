@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header><span class="logo">SP</span><strong>My Study Planner</strong><span class="header-note">Learn a little, every day.</span></header>
+<main>
+  <p class="eyebrow">A simple space for your studies</p>
+  <h1>Plan today. Feel ready tomorrow.</h1>
+  <p class="intro">Keep your subjects, revision topics and exam dates together.</p>
+  <div class="counts"><span><b>{{ total }}</b> Topics</span><span><b>{{ pending }}</b> To study</span><span><b>{{ finished }}</b> Completed</span></div>
+  {% for message in messages %}<p role="status" class="message {{ message.tags }}">{{ message }}</p>{% endfor %}
+  <div class="layout">
+    <section class="card add-card">
+      <h2>Add a study topic</h2>
+      <p>Start with one topic you want to prepare.</p>
+      <form method="post" action="{% url 'home' %}">
+        {% csrf_token %}
+        {% for field in form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        {% endfor %}
+        <button class="primary" type="submit">+ Add topic</button>
+      </form>
+      <div class="tip"><b>A small study tip</b><p>Break a big subject into smaller topics. Start with the nearest exam.</p></div>
+    </section>
+    <section class="card list-card">
+      <div class="section-heading"><h2>Your study list</h2><span>Nearest exams first</span></div>
+      {% for item in topics %}
+        <article class="topic {% if item.completed %}done{% endif %}">
+          <div class="topic-top"><span class="subject">{{ item.subject }}</span><span class="status">{% if item.completed %}Completed{% else %}To study{% endif %}</span></div>
+          <h3>{{ item.topic }}</h3>
+          <p class="date">Exam: {{ item.exam_date|date:'d M Y' }}{% if not item.completed %}{% if item.exam_date < today %} · <span class="overdue">Exam date passed</span>{% elif item.exam_date == today %} · <span class="overdue">Today</span>{% endif %}{% endif %}</p>
+          <div class="actions">
+            <form method="post" action="{% url 'complete' item.pk %}">{% csrf_token %}<button type="submit">{% if item.completed %}Mark to study{% else %}Mark completed{% endif %}</button></form>
+            <form method="post" action="{% url 'delete' item.pk %}">{% csrf_token %}<button class="delete" type="submit" aria-label="Delete {{ item.topic }}">Delete</button></form>
+          </div>
+        </article>
+      {% empty %}<div class="empty"><span>✎</span><h3>Your next chapter starts here.</h3><p>Add a subject, a topic and an exam date to begin.</p></div>{% endfor %}
+    </section>
+  </div>
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+</body>
+</html>
