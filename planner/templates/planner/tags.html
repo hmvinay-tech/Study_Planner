@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage Tags - My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header>
+  <span class="logo">SP</span>
+  <strong>My Study Planner</strong>
+  <nav class="header-nav">
+    <span class="user-greeting">Hi, {{ user.username }}</span>
+    <a href="{% url 'home' %}" class="nav-link">Planner</a>
+    <a href="{% url 'session_list' %}" class="nav-link">Sessions</a>
+    <a href="{% url 'notification_settings' %}" class="nav-link">Notifications</a>
+    <a href="{% url 'tag_list' %}" class="nav-link active">Tags</a>
+    <a href="{% url 'recurring_list' %}" class="nav-link">Recurring</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode (Ctrl+Shift+D)">
+      <span class="moon-icon">🌙</span>
+      <span class="sun-icon">☀️</span>
+    </button>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="nav-link btn-logout">Logout</button>
+    </form>
+  </nav>
+</header>
+
+<main>
+  <p class="eyebrow">Organize your topics</p>
+  <h1>Manage Tags</h1>
+  <p class="intro">Create tags to categorize and color-code your study topics.</p>
+
+  {% for message in messages %}
+    <p role="status" class="message {{ message.tags }}">{{ message }}</p>
+  {% endfor %}
+
+  <div class="layout">
+    <section class="card add-card">
+      <h2>Create a tag</h2>
+      <form method="post" action="{% url 'tag_list' %}">
+        {% csrf_token %}
+        {% for field in form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        {% endfor %}
+        <button class="primary" type="submit">+ Add tag</button>
+      </form>
+    </section>
+
+    <section class="card list-card">
+      <div class="section-heading"><h2>Your tags</h2></div>
+      {% for tag in tags %}
+        <article class="topic">
+          <div class="topic-top">
+            <span class="subject" style="background: {{ tag.color }}; color: white; padding: 4px 10px; border-radius: 6px;">{{ tag.name }}</span>
+          </div>
+          <p class="date">Used by {{ tag.topics.count }} topic{{ tag.topics.count|pluralize }}</p>
+          <div class="actions">
+            <form method="post" action="{% url 'delete_tag' tag.pk %}" onsubmit="return confirm('Delete this tag?')">{% csrf_token %}
+              <button class="delete" type="submit">Delete</button>
+            </form>
+          </div>
+        </article>
+      {% empty %}
+        <div class="empty">
+          <span>🏷️</span>
+          <h3>No tags yet</h3>
+          <p>Create your first tag to start organizing.</p>
+        </div>
+      {% endfor %}
+    </section>
+  </div>
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+
+<!-- Keyboard Shortcuts Hint -->
+<details class="shortcuts-hint" id="shortcuts-hint">
+  <summary>⌨️ Keyboard Shortcuts</summary>
+  <ul>
+    <li><kbd>N</kbd> New topic (focus form)</li>
+    <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> Toggle dark mode</li>
+    <li><kbd>/</kbd> Focus search (future)</li>
+    <li><kbd>Esc</kbd> Close modals/hints</li>
+    <li><kbd>?</kbd> Show this help</li>
+  </ul>
+</details>
+
+{% include 'planner/_theme_script.html' %}
+</body>
+</html>

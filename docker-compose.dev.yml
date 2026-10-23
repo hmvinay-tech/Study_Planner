@@ -1,0 +1,55 @@
+version: '3.8'
+
+# Development override - extends docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgres://study_user:changeme@db:5432/study_planner
+      - REDIS_URL=redis://redis:6379/0
+      - DJANGO_SECRET_KEY=dev-secret-key-not-for-production
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    command: celery -A config worker -l debug -Q default,emails,notifications --concurrency=1
+    volumes:
+      - .:/app
+      - ./media:/app/media
+
+  celery_beat:
+    command: celery -A config beat -l debug --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+      - ./media:/app/media
+
+  # Debugpy for remote debugging (VS Code)
+  debugpy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m debugpy --listen 0.0.0.0:5678 --wait-for-client manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "5678:5678"
+    environment:
+      - DEBUG=True
+    depends_on:
+      - db
+      - redis

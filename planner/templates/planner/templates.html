@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Topic Templates - My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header>
+  <span class="logo">SP</span>
+  <strong>My Study Planner</strong>
+  <nav class="header-nav">
+    <span class="user-greeting">Hi, {{ user.username }}</span>
+    <a href="{% url 'home' %}" class="nav-link">Planner</a>
+    <a href="{% url 'session_list' %}" class="nav-link">Sessions</a>
+    <a href="{% url 'tag_list' %}" class="nav-link">Tags</a>
+    <a href="{% url 'notification_settings' %}" class="nav-link">Notifications</a>
+    <a href="{% url 'recurring_list' %}" class="nav-link">Recurring</a>
+    <a href="{% url 'template_list' %}" class="nav-link active">Templates</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode (Ctrl+Shift+D)">
+      <span class="moon-icon">🌙</span>
+      <span class="sun-icon">☀️</span>
+    </button>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="nav-link btn-logout">Logout</button>
+    </form>
+  </nav>
+</header>
+<main>
+  <p class="eyebrow">Reusable templates</p>
+  <h1>Topic Templates</h1>
+  <p class="intro">Create reusable templates to quickly add common study topics.</p>
+
+  {% for message in messages %}
+    <p role="status" class="message {{ message.tags }}">{{ message }}</p>
+  {% endfor %}
+
+  <div class="layout">
+    <section class="card add-card">
+      <h2>Create Template</h2>
+      <form method="post" action="{% url 'template_list' %}">
+        {% csrf_token %}
+        {% for field in form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+          {% if field.help_text %}
+            <small style="color: var(--text-muted); font-size: 11px;">{{ field.help_text }}</small>
+          {% endif %}
+        {% endfor %}
+        <button class="primary" type="submit">+ Add Template</button>
+      </form>
+      <div class="tip">
+        <b>Tip:</b> Use <code>{date}</code> in the topic name for dynamic dates. 
+        Enable Markdown for rich formatting in default notes.
+      </div>
+    </section>
+
+    <section class="card list-card">
+      <div class="section-heading"><h2>Your Templates</h2></div>
+      {% for template in templates %}
+        <article class="topic">
+          <div class="topic-top">
+            <span class="subject">{{ template.name }}</span>
+            <span class="status">{{ template.subject|default:"Any subject" }}</span>
+            <span class="priority-badge priority-{{ template.default_priority_css }}">{{ template.get_default_priority_display }}</span>
+          </div>
+          <h3>{{ template.topic }}</h3>
+          {% if template.description %}
+            <p style="color: var(--text-secondary); font-size: 13px; margin: 8px 0;">{{ template.description }}</p>
+          {% endif %}
+          {% if template.default_tags.all %}
+            <div class="tags">
+              {% for tag in template.default_tags.all %}
+                <span class="tag" style="background: {{ tag.color }}">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if template.default_notes %}
+            <p class="notes">{{ template.default_notes|truncatechars:100 }}</p>
+          {% endif %}
+          <p class="date">
+            Exam offset: {{ template.exam_date_offset_days }} day{{ template.exam_date_offset_days|pluralize }} after creation
+          </p>
+          <div class="actions">
+            <form method="post" action="{% url 'create_from_template' template.pk %}">{% csrf_token %}
+              <button type="submit">Use Template</button>
+            </form>
+            <form method="post" action="{% url 'delete_template' template.pk %}" onsubmit="return confirm('Delete this template?')">{% csrf_token %}
+              <button class="delete" type="submit">Delete</button>
+            </form>
+          </div>
+        </article>
+      {% empty %}
+        <div class="empty">
+          <span>📋</span>
+          <h3>No templates yet</h3>
+          <p>Create your first template to speed up topic creation.</p>
+        </div>
+      {% endfor %}
+    </section>
+  </div>
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+
+<!-- Keyboard Shortcuts Hint -->
+<details class="shortcuts-hint" id="shortcuts-hint">
+  <summary>⌨️ Keyboard Shortcuts</summary>
+  <ul>
+    <li><kbd>N</kbd> New topic (focus form)</li>
+    <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> Toggle dark mode</li>
+    <li><kbd>/</kbd> Focus search (future)</li>
+    <li><kbd>Esc</kbd> Close modals/hints</li>
+    <li><kbd>?</kbd> Show this help</li>
+  </ul>
+</details>
+
+{% include 'planner/_theme_script.html' %}
+</body>
+</html>

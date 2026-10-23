@@ -1,0 +1,84 @@
+<!-- Theme Toggle & Keyboard Shortcuts Script -->
+<script>
+// Theme toggle functionality
+(function() {
+  const themeToggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+  
+  // Initialize theme from localStorage or system preference
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    html.setAttribute('data-theme', theme);
+  }
+  
+  // Toggle theme
+  function toggleTheme() {
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
+  
+  // Initialize on load
+  initTheme();
+  
+  // Toggle button click
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+  
+  // Keyboard shortcut: Ctrl+Shift+D
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      e.preventDefault();
+      toggleTheme();
+    }
+    
+    // Close hints with Escape
+    if (e.key === 'Escape') {
+      const hints = document.querySelectorAll('.shortcuts-hint[open]');
+      hints.forEach(hint => hint.removeAttribute('open'));
+    }
+    
+    // Show shortcuts with ?
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      const hint = document.getElementById('shortcuts-hint');
+      if (hint) hint.toggleAttribute('open');
+    }
+    
+    // Focus new topic form with N
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const activeElement = document.activeElement;
+      const isInput = activeElement.tagName === 'INPUT' || 
+                      activeElement.tagName === 'TEXTAREA' || 
+                      activeElement.tagName === 'SELECT' ||
+                      activeElement.isContentEditable;
+      if (!isInput) {
+        e.preventDefault();
+        const subjectInput = document.getElementById('id_subject');
+        if (subjectInput) subjectInput.focus();
+      }
+    }
+  });
+  
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (!localStorage.getItem('theme')) {
+      html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    }
+  });
+  
+  // Auto-close hints when clicking outside
+  document.addEventListener('click', function(e) {
+    const hint = document.getElementById('shortcuts-hint');
+    if (hint && hint.hasAttribute('open') && 
+        !hint.contains(e.target) && 
+        e.target.id !== 'shortcuts-hint') {
+      hint.removeAttribute('open');
+    }
+  });
+})();
+</script>

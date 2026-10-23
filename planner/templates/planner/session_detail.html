@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Session - My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header>
+  <span class="logo">SP</span>
+  <strong>My Study Planner</strong>
+  <nav class="header-nav">
+    <span class="user-greeting">Hi, {{ user.username }}</span>
+    <a href="{% url 'home' %}" class="nav-link">Planner</a>
+    <a href="{% url 'session_list' %}" class="nav-link active">Sessions</a>
+    <a href="{% url 'tag_list' %}" class="nav-link">Tags</a>
+    <a href="{% url 'notification_settings' %}" class="nav-link">Notifications</a>
+    <a href="{% url 'recurring_list' %}" class="nav-link">Recurring</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode (Ctrl+Shift+D)">
+      <span class="moon-icon">🌙</span>
+      <span class="sun-icon">☀️</span>
+    </button>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="nav-link btn-logout">Logout</button>
+    </form>
+  </nav>
+</header>
+<main style="max-width: 600px;">
+  <p class="eyebrow">Edit session</p>
+  <h1>Study Session Details</h1>
+
+  {% for message in messages %}
+    <p role="status" class="message {{ message.tags }}">{{ message }}</p>
+  {% endfor %}
+
+  <section class="card">
+    <form method="post" action="{% url 'session_detail' session.pk %}">
+      {% csrf_token %}
+      {% for field in form %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      {% endfor %}
+      <button class="primary" type="submit" style="margin-top: 20px;">Save Changes</button>
+    </form>
+
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ececf3;">
+      <p><strong>Started:</strong> {{ session.started_at|date:'M d, Y H:i' }}</p>
+      <p><strong>Ended:</strong> {{ session.ended_at|date:'M d, Y H:i'|default:"(in progress)" }}</p>
+      <p><strong>Duration:</strong> {{ session.duration_minutes }} minutes</p>
+    </div>
+
+    <p style="margin-top: 20px; text-align: center;">
+      <a href="{% url 'session_list' %}" class="nav-link">← Back to Sessions</a>
+    </p>
+  </section>
+
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+
+<!-- Keyboard Shortcuts Hint -->
+<details class="shortcuts-hint" id="shortcuts-hint">
+  <summary>⌨️ Keyboard Shortcuts</summary>
+  <ul>
+    <li><kbd>N</kbd> New topic (focus form)</li>
+    <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> Toggle dark mode</li>
+    <li><kbd>/</kbd> Focus search (future)</li>
+    <li><kbd>Esc</kbd> Close modals/hints</li>
+    <li><kbd>?</kbd> Show this help</li>
+  </ul>
+</details>
+
+{% include 'planner/_theme_script.html' %}
+</body>
+</html>

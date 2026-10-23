@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register - My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header><span class="logo">SP</span><strong>My Study Planner</strong></header>
+<main style="max-width: 400px;">
+  <p class="eyebrow">Create an account</p>
+  <h1>Start planning your studies</h1>
+
+  {% for message in messages %}
+    <p role="status" class="message {{ message.tags }}">{{ message }}</p>
+  {% endfor %}
+
+  <section class="card">
+    <form method="post" action="{% url 'register' %}">
+      {% csrf_token %}
+      {% for field in form %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      {% endfor %}
+      <button class="primary" type="submit" style="margin-top: 20px;">Create account</button>
+    </form>
+    <p style="margin-top: 20px; text-align: center; font-size: 14px;">
+      Already have an account? <a href="{% url 'login' %}">Sign in</a>
+    </p>
+  </section>
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+</body>
+</html>

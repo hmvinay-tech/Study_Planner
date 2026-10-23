@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notifications - My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header>
+  <span class="logo">SP</span>
+  <strong>My Study Planner</strong>
+  <nav class="header-nav">
+    <span class="user-greeting">Hi, {{ user.username }}</span>
+    <a href="{% url 'home' %}" class="nav-link">Planner</a>
+    <a href="{% url 'session_list' %}" class="nav-link">Sessions</a>
+    <a href="{% url 'tag_list' %}" class="nav-link">Tags</a>
+    <a href="{% url 'notification_settings' %}" class="nav-link active">Notifications</a>
+    <a href="{% url 'recurring_list' %}" class="nav-link">Recurring</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode (Ctrl+Shift+D)">
+      <span class="moon-icon">🌙</span>
+      <span class="sun-icon">☀️</span>
+    </button>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="nav-link btn-logout">Logout</button>
+    </form>
+  </nav>
+</header>
+<main>
+  <p class="eyebrow">Stay informed</p>
+  <h1>Notification Settings</h1>
+  <p class="intro">Configure when and how you receive study reminders.</p>
+
+  {% for message in messages %}
+    <p role="status" class="message {{ message.tags }}">{{ message }}</p>
+  {% endfor %}
+
+  <div class="layout">
+    <section class="card add-card">
+      <h2>Email Preferences</h2>
+      <form method="post" action="{% url 'notification_settings' %}">
+        {% csrf_token %}
+        {% for field in form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        {% endfor %}
+        <button class="primary" type="submit">Save Preferences</button>
+      </form>
+    </section>
+
+    <section class="card list-card">
+      <h2>Upcoming Reminders</h2>
+      {% if upcoming %}
+        <p>These topics will trigger notifications (within {{ prefs.remind_before_days }} days):</p>
+        {% for topic in upcoming %}
+          <article class="topic">
+            <div class="topic-top">
+              <span class="subject">{{ topic.subject }}</span>
+              <span class="status">In {{ topic.exam_date|date:'M d' }}</span>
+            </div>
+            <h3>{{ topic.topic }}</h3>
+            <p class="date">Exam: {{ topic.exam_date|date:'d M Y' }} · {{ topic.exam_date|timeuntil }} remaining</p>
+          </article>
+        {% endfor %}
+      {% else %}
+        <div class="empty">
+          <span>✅</span>
+          <h3>All caught up!</h3>
+          <p>No upcoming exams in your reminder window.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="layout" style="margin-top: 24px;">
+    <section class="card">
+      <h2>How it works</h2>
+      <ul style="line-height: 1.8; color: #6b6f83;">
+        <li><b>Daily digest:</b> Sent at {{ prefs.daily_digest_time }} with upcoming & overdue exams</li>
+        <li><b>Reminder window:</b> {{ prefs.remind_before_days }} days before each exam</li>
+        <li><b>Overdue alerts:</b> {% if prefs.notify_overdue %}Enabled{% else %}Disabled{% endif %}</li>
+        <li><b>Due today alerts:</b> {% if prefs.notify_on_due %}Enabled{% else %}Disabled{% endif %}</li>
+      </ul>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 16px;">
+        <i>Note: Email sending requires Django email backend configuration in settings.py.
+        For local development, emails print to console.</i>
+      </p>
+    </section>
+  </div>
+
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+
+<!-- Keyboard Shortcuts Hint -->
+<details class="shortcuts-hint" id="shortcuts-hint">
+  <summary>⌨️ Keyboard Shortcuts</summary>
+  <ul>
+    <li><kbd>N</kbd> New topic (focus form)</li>
+    <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> Toggle dark mode</li>
+    <li><kbd>/</kbd> Focus search (future)</li>
+    <li><kbd>Esc</kbd> Close modals/hints</li>
+    <li><kbd>?</kbd> Show this help</li>
+  </ul>
+</details>
+
+{% include 'planner/_theme_script.html' %}
+</body>
+</html>

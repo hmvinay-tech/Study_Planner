@@ -1,0 +1,147 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Sessions - My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header>
+  <span class="logo">SP</span>
+  <strong>My Study Planner</strong>
+  <nav class="header-nav">
+    <span class="user-greeting">Hi, {{ user.username }}</span>
+    <a href="{% url 'home' %}" class="nav-link">Planner</a>
+    <a href="{% url 'session_list' %}" class="nav-link active">Sessions</a>
+    <a href="{% url 'tag_list' %}" class="nav-link">Tags</a>
+    <a href="{% url 'notification_settings' %}" class="nav-link">Notifications</a>
+    <a href="{% url 'recurring_list' %}" class="nav-link">Recurring</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode (Ctrl+Shift+D)">
+      <span class="moon-icon">🌙</span>
+      <span class="sun-icon">☀️</span>
+    </button>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}
+      <button type="submit" class="nav-link btn-logout">Logout</button>
+    </form>
+  </nav>
+</header>
+<main>
+  <p class="eyebrow">Time tracking</p>
+  <h1>Study Sessions</h1>
+  <p class="intro">Track how long you spend studying each topic.</p>
+
+  <div class="counts">
+    <span><b>{{ today_minutes }}</b> min today</span>
+    <span><b>{{ week_minutes }}</b> min this week</span>
+    <span><b>{{ sessions|length }}</b> recent sessions</span>
+  </div>
+
+  {% for message in messages %}
+    <p role="status" class="message {{ message.tags }}">{{ message }}</p>
+  {% endfor %}
+
+  <div class="layout">
+    <!-- Start Session Form -->
+    <section class="card add-card">
+      {% if active_session %}
+        <h2>Active Session</h2>
+        <div class="active-session">
+          <p class="subject">{{ active_session.subject }}</p>
+          {% if active_session.topic %}
+            <p class="topic-name">{{ active_session.topic.topic }}</p>
+          {% endif %}
+          <p class="timer" id="session-timer">00:00:00</p>
+          <form method="post" action="{% url 'stop_session' active_session.pk %}">{% csrf_token %}
+            <button class="primary" type="submit" style="background: #9f5656;">Stop Session</button>
+          </form>
+        </div>
+        <script>
+          // Simple timer display
+          const start = new Date('{{ active_session.started_at|date:"c" }}').getTime();
+          function updateTimer() {
+            const elapsed = Date.now() - start;
+            const h = String(Math.floor(elapsed / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
+            const s = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
+            document.getElementById('session-timer').textContent = `${h}:${m}:${s}`;
+          }
+          setInterval(updateTimer, 1000);
+          updateTimer();
+        </script>
+      {% else %}
+        <h2>Start a Study Session</h2>
+        <form method="post" action="{% url 'session_list' %}">
+          {% csrf_token %}
+          {% for field in form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {{ field.errors }}
+          {% endfor %}
+          <button class="primary" type="submit">▶ Start Timer</button>
+        </form>
+        <p class="tip"><b>Tip:</b> Select a topic to auto-fill subject, or enter a custom subject.</p>
+      {% endif %}
+    </section>
+
+    <!-- Session History -->
+    <section class="card list-card">
+      <div class="section-heading"><h2>Recent Sessions</h2></div>
+      {% for session in sessions %}
+        <article class="topic {% if session.is_active %}active{% endif %}">
+          <div class="topic-top">
+            <span class="subject">{{ session.subject }}</span>
+            <span class="status">{% if session.is_active %}In Progress{% else %}{{ session.duration_minutes }} min{% endif %}</span>
+          </div>
+          {% if session.topic %}
+            <h3>{{ session.topic.topic }}</h3>
+          {% endif %}
+          {% if session.notes %}
+            <p class="notes">{{ session.notes }}</p>
+          {% endif %}
+          <p class="date">
+            Started: {{ session.started_at|date:'M d, H:i' }}
+            {% if session.ended_at %} · Ended: {{ session.ended_at|date:'H:i' }}{% endif %}
+          </p>
+          <div class="actions">
+            {% if not session.is_active %}
+              <a href="{% url 'session_detail' session.pk %}" class="nav-link" style="padding: 6px 10px; font-size: 12px;">Edit</a>
+            {% endif %}
+          </div>
+        </article>
+      {% empty %}
+        <div class="empty">
+          <span>⏱️</span>
+          <h3>No sessions yet</h3>
+          <p>Start your first study session above!</p>
+        </div>
+      {% endfor %}
+    </section>
+  </div>
+  <footer>Python + Django + SQLite · Beginner study planner project</footer>
+</main>
+
+<style>
+  .active-session { text-align: center; padding: 20px; }
+  .active-session .subject { font-size: 18px; font-weight: 600; color: var(--accent-primary); margin-bottom: 8px; }
+  .active-session .topic-name { color: var(--text-muted); margin-bottom: 16px; }
+  .active-session .timer { font-size: 48px; font-family: monospace; font-weight: bold; color: var(--text-heading); margin: 20px 0; }
+  .topic.active { border-left: 3px solid var(--accent-primary); }
+</style>
+
+<!-- Keyboard Shortcuts Hint -->
+<details class="shortcuts-hint" id="shortcuts-hint">
+  <summary>⌨️ Keyboard Shortcuts</summary>
+  <ul>
+    <li><kbd>N</kbd> New topic (focus form)</li>
+    <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> Toggle dark mode</li>
+    <li><kbd>/</kbd> Focus search (future)</li>
+    <li><kbd>Esc</kbd> Close modals/hints</li>
+    <li><kbd>?</kbd> Show this help</li>
+  </ul>
+</details>
+
+{% include 'planner/_theme_script.html' %}
+</body>
+</html>

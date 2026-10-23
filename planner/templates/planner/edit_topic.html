@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit study topic · My Study Planner</title>
+  <link rel="stylesheet" href="{% static 'planner/style.css' %}">
+</head>
+<body>
+<header>
+  <span class="logo">SP</span>
+  <strong>My Study Planner</strong>
+  <nav class="header-nav">
+    <a href="{% url 'home' %}" class="nav-link">Planner</a>
+    <a href="{% url 'session_list' %}" class="nav-link">Sessions</a>
+  </nav>
+</header>
+<main class="edit-page">
+  <p class="eyebrow">Update your plan</p>
+  <h1>Edit study topic</h1>
+  <p class="intro">Change the subject, exam date, priority, tags or notes.</p>
+  <section class="card edit-card">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      {% endfor %}
+      <div class="filter-actions">
+        <button class="primary" type="submit">Save changes</button>
+        <a class="action-link" href="{% url 'home' %}">Cancel</a>
+      </div>
+    </form>
+  </section>
+</main>
+</body>
+</html>

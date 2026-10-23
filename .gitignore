@@ -3,4 +3,11 @@ __pycache__/
 *.pyc
 db.sqlite3
 .env
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+logs/
+staticfiles/
+media/
 PRESENTATION.md
