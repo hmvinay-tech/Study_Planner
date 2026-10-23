@@ -51,11 +51,8 @@ RUN mkdir -p /app/staticfiles /app/media && chown -R appuser:appuser /app
 USER appuser
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8000 10000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD-SHELL curl -f "http://localhost:${PORT:-8000}/health/ready/" || exit 1
-
+# Render performs HTTP readiness checks using healthCheckPath in render.yaml.
 # Default command
 CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-1} --timeout 120 --access-logfile - --error-logfile -"]
